@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rechercher MAS</title>
     <style>
+        /* ================================================= */
+        /* === PARAMÈTRES D'AJUSTEMENT DU NUMÉRO TROUVÉ === */
+        /* ================================================= */
+        :root {
+            /* 1. Taille du texte (1vw = 1% de la largeur du viewport) */
+            --found-font-size: 0.1vw; 
+            /* 2. Rembourrage autour du texte (contrôle la taille du fond rouge) */
+            --found-padding-x: 0.1vw; /* Rembourrage horizontal */
+            --found-padding-y: 0.1vw; /* Rembourrage vertical */
+        }
+        
         html, body {
             margin: 0;
             padding: 0;
@@ -69,9 +80,9 @@
         .number.found {
             background-color: rgba(255, 0, 0, 0.9); /* Fond rouge plus opaque */
             transform: translate(-50%, -50%); 
-            /* TAILLE RÉDUITE POUR UNE MEILLEURE ÉCHELLE SUR LE PLAN */
-            font-size: 1vw; 
-            padding: 0.25vw 0.5vw; 
+            /* UTILISATION DES VARIABLES DÉFINIES EN HAUT */
+            font-size: var(--found-font-size); 
+            padding: var(--found-padding-y) var(--found-padding-x); 
             z-index: 50; 
         }
 
