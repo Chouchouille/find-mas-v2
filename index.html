@@ -48,7 +48,7 @@
             color: white;
             /* Taille de police par défaut (invisible) */
             font-size: 0.5vw; 
-            /* Couleur de fond noir pour le numéro non trouvé (selon votre demande) */
+            /* Couleur de fond noir pour le numéro non trouvé */
             background-color: rgba(0, 0, 0, 0.7); 
             padding: 0px;
             border-radius: 5px;
@@ -68,11 +68,10 @@
         /* CLASSE FOUND - Le numéro trouvé */
         .number.found {
             background-color: rgba(255, 0, 0, 0.9); /* Fond rouge plus opaque */
-            /* RETRAIT du scale(2.0) pour que la taille soit gérée par la police et le padding */
             transform: translate(-50%, -50%); 
-            /* Taille de police et padding ajustés pour le rendre plus visible et propre */
-            font-size: 2vw; /* Taille du texte */
-            padding: 0.5vw 1vw; /* Taille du fond rouge autour du texte */
+            /* TAILLE RÉDUITE POUR UNE MEILLEURE ÉCHELLE SUR LE PLAN */
+            font-size: 1vw; 
+            padding: 0.25vw 0.5vw; 
             z-index: 50; 
         }
 
