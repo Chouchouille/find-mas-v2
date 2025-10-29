@@ -8,46 +8,63 @@
         body {
             margin: 0;
             padding: 0;
-            /* Remplir 100% de l'écran verticalement */
-            height: 100vh; 
-            background-image: url('mas.jpg');
-            /* S'assurer que le plan couvre l'écran sans déborder */
-            background-size: contain; 
-            background-repeat: no-repeat; /* Empêcher la répétition */
-            background-position: center center; /* Centrer l'image */
+            height: 100vh;
             font-family: Arial, sans-serif;
+            background-color: #000;
+            overflow: auto; /* Permet le défilement/zoom */
         }
 
+        /* NOUVEAU CONTENEUR PRINCIPAL qui permet le zoom et la référence de position */
+        #map-wrapper {
+            position: relative; 
+            width: 100%;
+            height: 100vh;
+            overflow: hidden; 
+        }
+
+        /* L'image de la carte, pour le zoom */
+        #map-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Le conteneur des numéros, par-dessus l'image */
         .container {
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
             cursor: pointer;
+            pointer-events: none; /* Ne pas intercepter les clics généraux */
         }
 
         .number {
             position: absolute;
             color: white;
-            font-size: 0px;
+            font-size: 0.5vw; 
             background-color: rgba(185, 184, 184, 0.5);
             padding: 0px;
             border-radius: 5px;
             transition: background-color 0.1s ease, transform 0.2s ease, font-size 0.2s ease;
+            pointer-events: auto; /* Les numéros restent cliquables */
         }
 
         /* Désactiver les effets de survol au lieu de les changer (mieux pour le tactile) */
         .number:hover {
             background-color: rgba(185, 184, 184, 0.5); 
             transform: none; 
-            font-size: 0px; 
+            font-size: 0.5vw; 
         }
 
         .number.found {
             background-color: rgba(255, 0, 0, 0.7);
-            /* Augmenter l'échelle et la taille pour la visibilité sur mobile */
             transform: scale(2.0); 
-            font-size: 1vw; /* <-- MODIFICATION : Taille ajustée au Viewport Width */
+            font-size: 1.5vw; 
             padding: 5px 8px;
-            z-index: 50; /* S'assurer qu'il est au-dessus des autres numéros */
+            z-index: 50; 
         }
 
         /* Styles pour la recherche et le mot de passe sur mobile */
@@ -60,13 +77,13 @@
             border-radius: 20px;
             color: white;
             border: 2px solid rgb(255, 0, 0);
-            width: 45vw; /* Plus compact */
+            width: 45vw;
             box-sizing: border-box; 
             z-index: 100;
         }
 
         .password-box {
-            top: 18vw; /* Décaler plus bas pour ne pas chevaucher */
+            top: 18vw; 
             display: block;
         }
 
@@ -92,9 +109,8 @@
             position: fixed;
             bottom: 5vw; 
             left: 50%;
-            /* Centrer l'image au milieu de l'écran mobile pour une meilleure visibilité */
             transform: translateX(-50%); 
-            width: 80vw; /* Utiliser une grande partie de l'écran */
+            width: 80vw;
             height: 80vw;
             max-width: 400px;
             max-height: 400px;
@@ -143,7 +159,12 @@
     </style>
 </head>
 <body>
-    <div class="container" id="container"></div>
+    <div id="map-wrapper">
+        <img id="map-image" src="mas.jpg" alt="Plan de masse du casino" />
+        
+        <div class="container" id="container">
+            </div>
+    </div>
 
     <div class="search-box">
         <input type="text" id="searchInput" placeholder="Rechercher un numéro">
@@ -172,7 +193,6 @@
             // Ajoutez ici tous vos autres numéros de machines et leurs chemins d'images
         };
 
-        // Les coordonnées sont maintenant sauvegardées en POURCENTAGE (ex: "50%", "30%")
         const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
         restoreNumbers();
 
@@ -188,7 +208,6 @@
             numberElement.classList.add("number");
             numberElement.textContent = number;
             
-            // Les positions sont définies en pourcentage
             numberElement.style.left = x;
             numberElement.style.top = y;
 
@@ -196,7 +215,6 @@
                 if (isPasswordValid) {
                     modifyOrDeleteNumber(number);
                 } else {
-                    // Si le mode édition est désactivé, le clic sert à chercher et afficher l'image
                     searchNumber(number);
                 }
             });
@@ -204,34 +222,38 @@
             document.getElementById("container").appendChild(numberElement);
         }
 
-        // Nouvelle logique de clic pour placer les numéros avec des POURCENTAGES
-        document.getElementById("container").addEventListener("click", function (event) {
+        // NOUVEL ÉCOUTEUR DE CLIC sur le conteneur principal #map-wrapper
+        document.getElementById("map-wrapper").addEventListener("click", function (event) {
+            // S'assurer que le clic n'est pas sur un autre élément fixe (comme la barre de recherche)
+            if (event.target.id !== "map-image") return;
+            
             if (!isPasswordValid) return;
 
-            // Calculer les coordonnées en POURCENTAGE
-            const container = event.currentTarget;
-            const rect = container.getBoundingClientRect();
+            // Utiliser les coordonnées de l'image pour le calcul
+            const imageElement = document.getElementById("map-image");
+            const rect = imageElement.getBoundingClientRect();
             
-            // Position du clic par rapport au conteneur (en pourcentage)
+            // Calculer les coordonnées en POURCENTAGE
             const xPercent = ((event.clientX - rect.left) / rect.width) * 100;
             const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
             
-            // S'assurer qu'un numéro est bien saisi
+            // S'assurer que le clic est à l'intérieur de l'image visible
+            if (xPercent < 0 || xPercent > 100 || yPercent < 0 || yPercent > 100) {
+                 return;
+            }
+
             let number = null;
             while(number === null || isNaN(number) || number.trim() === "") {
                  number = prompt("Entrez un numéro à placer :");
-                 if (number === null) return; // Si l'utilisateur annule le prompt
+                 if (number === null) return;
             }
             
-            // Convertir les pourcentages en chaînes avec '%'
             const xValue = xPercent + '%';
             const yValue = yPercent + '%';
 
             if (number) {
-                // Créer l'élément avec les pourcentages
                 createNumberElement(number, xValue, yValue);
                 
-                // Sauvegarder les valeurs en pourcentage dans localStorage
                 numbers[number] = { x: xValue, y: yValue };
                 localStorage.setItem("numbers", JSON.stringify(numbers));
             }
@@ -254,21 +276,17 @@
             }
         }
 
-        // Fonction searchNumber() mise à jour pour permettre la recherche par code (clic ou saisie)
         function searchNumber(inputNumber = null) {
             const searchTerm = inputNumber || document.getElementById("searchInput").value.trim();
             
-            // Retirer la classe 'found' de tous les numéros
             document.querySelectorAll(".number").forEach(el => el.classList.remove("found"));
             
-            // Fermer l'image précédente
             closeImage();
 
             if (numbers[searchTerm]) {
                 document.querySelectorAll(".number").forEach(el => {
                     if (el.textContent === searchTerm) {
                         el.classList.add("found");
-                        // Scroll vers le numéro trouvé (utile pour les grands plans)
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
                     }
                 });
@@ -295,7 +313,7 @@
             if (document.getElementById("passwordInput").value === correctPassword) {
                 isPasswordValid = true;
                 alert("Mot de passe correct, vous pouvez modifier et placer les numéros.");
-                document.getElementById("passwordBox").style.display = 'none'; // Masquer la boîte de mot de passe
+                document.getElementById("passwordBox").style.display = 'none';
             } else {
                 alert("Mot de passe incorrect !");
             }
@@ -315,4 +333,3 @@
     </script>
 </body>
 </html>
-
