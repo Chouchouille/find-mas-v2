@@ -45,7 +45,7 @@
             background-color: rgba(255, 0, 0, 0.7);
             /* Augmenter l'échelle et la taille pour la visibilité sur mobile */
             transform: scale(2.0); 
-            font-size: 4vw; 
+            font-size: 2vw; /* <-- MODIFICATION : Taille ajustée au Viewport Width */
             padding: 5px 8px;
             z-index: 50; /* S'assurer qu'il est au-dessus des autres numéros */
         }
@@ -202,8 +202,6 @@
             });
 
             document.getElementById("container").appendChild(numberElement);
-            
-            // ATTENTION : La sauvegarde n'est plus faite ici. Elle est faite dans l'événement de clic pour éviter les doublons.
         }
 
         // Nouvelle logique de clic pour placer les numéros avec des POURCENTAGES
