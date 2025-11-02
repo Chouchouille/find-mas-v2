@@ -5,156 +5,240 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rechercher MAS</title>
     <style>
-        /* ================================================= */
-        /* === PARAMÈTRES D'AJUSTEMENT DU NUMÉRO TROUVÉ === */
-        /* ================================================= */
-        :root {
-            /* 1. Taille du texte (1vw = 1% de la largeur du viewport) */
-            --found-font-size: 0.3vw; 
-            /* 2. Rembourrage autour du texte (contrôle la taille du fond rouge) */
-            --found-padding-x: 0.2vw; /* Rembourrage horizontal */
-            --found-padding-y: 0.2vw; /* Rembourrage vertical */
-        }
-        
-        html, body {
+        /* === CODE DE BASE === */
+        body {
             margin: 0;
             padding: 0;
-            height: 100%; 
+            height: 90vh;
+            background-image: url('mas.jpg');
+            background-size: cover;
             font-family: Arial, sans-serif;
-            background-color: #000;
-            overflow: auto; 
         }
 
-        /* NOUVEAU CONTENEUR PRINCIPAL qui permet le zoom et la référence de position */
-        #map-wrapper {
-            position: relative; 
-            width: 100%;
-            height: 100%;
-            overflow: hidden; 
-        }
-
-        /* L'image de la carte, pour le zoom */
-        #map-image {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        /* Le conteneur des numéros, par-dessus l'image */
         .container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
+            position: relative;
             height: 100%;
             cursor: pointer;
-            pointer-events: none;
-            /* FIX CRUCIAL: Assure que le zoom agit de la même manière sur les numéros que sur l'image */
-            transform-origin: 0 0; 
         }
 
         .number {
             position: absolute;
             color: white;
-            /* Taille de police par défaut (invisible) */
-            font-size: 0.5vw; 
-            /* Couleur de fond noir pour le numéro non trouvé */
-            background-color: rgba(0, 0, 0, 0.7); 
+            font-size: 0px;
+            background-color: rgba(185, 184, 184, 0.5);
             padding: 0px;
             border-radius: 5px;
             transition: background-color 0.1s ease, transform 0.2s ease, font-size 0.2s ease;
-            pointer-events: auto; 
-            /* Centre le point exactement sur l'endroit cliqué */
-            transform: translate(-50%, -50%); 
         }
 
-        /* Désactiver les effets de survol au lieu de les changer (mieux pour le tactile) */
         .number:hover {
-            background-color: rgba(0, 0, 0, 0.7); 
-            transform: translate(-50%, -50%); 
-            font-size: 0.5vw; 
+            background-color: rgba(255, 255, 255, 0.7);
+            transform: scale(1.2);
+            font-size: 14px;
         }
 
-        /* CLASSE FOUND - Le numéro trouvé */
         .number.found {
-            background-color: rgba(255, 0, 0, 0.9); /* Fond rouge plus opaque */
-            transform: translate(-50%, -50%); 
-            /* UTILISATION DES VARIABLES DÉFINIES EN HAUT */
-            font-size: var(--found-font-size); 
-            padding: var(--found-padding-y) var(--found-padding-x); 
-            z-index: 50; 
+            background-color: rgba(255, 0, 0, 0.7);
+            transform: scale(1.5);
+            font-size: 18px;
         }
 
-        /* Les éléments de contrôle */
-        .top-controls {
-            display: flex;
-            gap: 10px;
-            position: fixed; 
+        .search-box, .password-box {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 20px;
+            color: white;
+            border: 2px solid rgb(255, 0, 0);
+        }
+
+        .password-box {
+            top: 80px;
+            display: block;
+        }
+
+        .image-container {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            display: none;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 0, 0, 0.6);
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.3s ease;
+        }
+
+        .image-container.show {
+            display: block;
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+
+        .close-btn:hover {
+            background: red;
+        }
+
+        /* === INTRO BONJOUR XAVIER === */
+        #introScreen {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            z-index: 200; 
-            background: rgba(0, 0, 0, 0.9); 
-            padding: 5px;
-            box-sizing: border-box;
+            height: 100%;
+            background: linear-gradient(to bottom, #000, #111);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            pointer-events: none;
         }
 
-        /* Styles des boîtes de recherche et de mot de passe */
-        .search-box, .password-box {
-            background-color: transparent;
-            padding: 0; 
-            border: none;
+        .intro-content {
+            text-align: center;
             color: white;
-            flex-grow: 1; 
-            max-width: 50%;
+            font-family: "Courier New", monospace;
         }
-        
-        /* Rendre les champs de saisie et les boutons plus grands pour les doigts */
-        .search-box input, .password-box input, .search-box button, .password-box button {
-            width: 100%;
-            margin-bottom: 5px;
-            box-sizing: border-box;
-            padding: 5px;
-            font-size: 3vw; 
+
+        .intro-content h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .intro-content p {
+            font-size: 1.2em;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 5px;
-            border: 1px solid red;
+            overflow: hidden;
+            margin: 0 auto;
+            position: relative;
         }
-        
-        .search-box button, .password-box button {
-            margin-top: 5px;
-            background-color: red;
-            color: white;
-            border: none;
-            cursor: pointer;
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: red;
+        }
+
+        #progressText {
+            margin-top: 10px;
+            font-size: 1.2em;
+            color: #ff4444;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .fade-out {
+            animation: fadeOut 1s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
         }
     </style>
 </head>
 <body>
-    
-    <div class="top-controls">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Rechercher un numéro">
-            <button onclick="searchNumber()">Rechercher</button>
-        </div>
 
-        <div class="password-box" id="passwordBox">
-            <input type="password" id="passwordInput" placeholder="Mot de passe">
-            <button onclick="validatePassword()">Valider</button>
+    <!-- === INTRO BONJOUR XAVIER === -->
+    <div id="introScreen">
+        <div class="intro-content">
+            <h1>💻 Bonjour Xavier...</h1>
+            <p>Chargement du système MAS...</p>
+            <div class="progress-bar">
+                <div class="progress"></div>
+            </div>
+            <div id="progressText">0%</div>
         </div>
     </div>
 
+    <!-- === CONTENU PRINCIPAL === -->
+    <div class="container" id="container"></div>
 
-    <div id="map-wrapper">
-        <img id="map-image" src="mas.jpg" alt="Plan de masse du casino" />
-        
-        <div class="container" id="container">
-            </div>
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Rechercher un numéro">
+        <button onclick="searchNumber()">Rechercher</button>
+    </div>
+
+    <div class="password-box" id="passwordBox">
+        <input type="password" id="passwordInput" placeholder="Mot de passe">
+        <button onclick="validatePassword()">Valider</button>
+    </div>
+
+    <div class="image-container" id="imageContainer">
+        <span class="close-btn" onclick="closeImage()">X</span>
+        <img id="imageDisplay" onclick="enlargeImage()">
     </div>
 
     <script>
+        // === INTRO FONCTIONNELLE ===
+        window.addEventListener("load", () => {
+            const intro = document.getElementById("introScreen");
+            const progress = document.querySelector(".progress");
+            const progressText = document.getElementById("progressText");
+            let width = 0;
+
+            const interval = setInterval(() => {
+                width++;
+                progress.style.width = width + "%";
+                progressText.textContent = width + "%";
+
+                if (width >= 100) {
+                    clearInterval(interval);
+                    intro.classList.add("fade-out");
+                    setTimeout(() => { intro.style.display = "none"; }, 1000);
+                }
+            }, 30);
+        });
+
+        // === RESTE DU CODE DE BASE ===
         const correctPassword = "17061977";
         let isPasswordValid = false;
+
+        const imagePaths = {
+            "508": "images/508.png",  
+            "507": "images/507.png",  
+            "506": "images/506.png",
+            "505": "images/505.png",
+            "228":"images/228.jpg",
+            "229": "images/229.jpg",
+            "0": "images/0.jpg",
+        };
 
         const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
         restoreNumbers();
@@ -170,50 +254,26 @@
             const numberElement = document.createElement("div");
             numberElement.classList.add("number");
             numberElement.textContent = number;
-            
-            numberElement.style.left = x;
-            numberElement.style.top = y;
+            numberElement.style.left = `${x}px`;
+            numberElement.style.top = `${y}px`;
 
             numberElement.addEventListener("click", function () {
                 if (isPasswordValid) {
                     modifyOrDeleteNumber(number);
-                } else {
-                    searchNumber(number);
                 }
             });
 
             document.getElementById("container").appendChild(numberElement);
+            numbers[number] = { x, y };
+            localStorage.setItem("numbers", JSON.stringify(numbers));
         }
 
-        document.getElementById("map-wrapper").addEventListener("click", function (event) {
-            if (event.target.id !== "map-image") return;
-            
+        document.getElementById("container").addEventListener("click", function (event) {
             if (!isPasswordValid) return;
 
-            const imageElement = document.getElementById("map-image");
-            const rect = imageElement.getBoundingClientRect();
-            
-            const xPercent = ((event.clientX - rect.left) / rect.width) * 100;
-            const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
-            
-            if (xPercent < 0 || xPercent > 100 || yPercent < 0 || yPercent > 100) {
-                 return;
-            }
-
-            let number = null;
-            while(number === null || isNaN(number) || number.trim() === "") {
-                 number = prompt("Entrez un numéro à placer :");
-                 if (number === null) return;
-            }
-            
-            const xValue = xPercent + '%';
-            const yValue = yPercent + '%';
-
-            if (number) {
-                createNumberElement(number, xValue, yValue);
-                
-                numbers[number] = { x: xValue, y: yValue };
-                localStorage.setItem("numbers", JSON.stringify(numbers));
+            const number = prompt("Entrez un nombre à placer :");
+            if (number && !isNaN(number)) {
+                createNumberElement(number, event.clientX, event.clientY);
             }
         });
 
@@ -234,44 +294,53 @@
             }
         }
 
-        function searchNumber(inputNumber = null) {
-            const searchTerm = inputNumber || document.getElementById("searchInput").value.trim();
-            
-            document.querySelectorAll(".number").forEach(el => el.classList.remove("found"));
-            
+        function searchNumber() {
+            const searchTerm = document.getElementById("searchInput").value.trim();
+            for (const key in numbers) {
+                document.querySelectorAll(".number").forEach(el => el.classList.remove("found"));
+            }
+
             if (numbers[searchTerm]) {
                 document.querySelectorAll(".number").forEach(el => {
                     if (el.textContent === searchTerm) {
                         el.classList.add("found");
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
                     }
                 });
+                displayImage(searchTerm);
             }
+        }
+
+        function displayImage(number) {
+            if (imagePaths[number]) {
+                document.getElementById("imageDisplay").src = imagePaths[number];
+                document.getElementById("imageContainer").classList.add("show");
+            }
+        }
+
+        function closeImage() {
+            document.getElementById("imageContainer").classList.remove("show");
+        }
+
+        function enlargeImage() {
+            window.open(document.getElementById("imageDisplay").src, "_blank");
         }
 
         function validatePassword() {
             if (document.getElementById("passwordInput").value === correctPassword) {
                 isPasswordValid = true;
-                alert("Mot de passe correct, vous pouvez modifier et placer les numéros.");
-                document.getElementById("passwordBox").style.display = 'none'; 
+                alert("Mot de passe correct, vous pouvez modifier les numéros.");
             } else {
                 alert("Mot de passe incorrect !");
             }
         }
 
         document.getElementById("searchInput").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                searchNumber();
-            }
+            if (event.key === "Enter") searchNumber();
         });
 
         document.getElementById("passwordInput").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                validatePassword();
-            }
+            if (event.key === "Enter") validatePassword();
         });
     </script>
 </body>
 </html>
-
-
