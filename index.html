@@ -1,267 +1,65 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" 
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Rechercher MAS</title>
-
 <style>
-    body {
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        background-color: #000;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
-    }
+/* === CONTENEUR ZOOMABLE === */
+.plan-zoom-wrapper {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    touch-action: none; /* important pour les gestes tactiles */
+}
 
-    /* === Plan contenant le fond et les numéros === */
-    .plan-container {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-        touch-action: manipulation;
-    }
+.zoom-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center center;
+    transform: translate(-50%, -50%) scale(1);
+    transition: transform 0.05s linear;
+}
 
-    .plan-container img {
-        max-width: 100%;
-        max-height: 100%;
-        height: auto;
-        width: auto;
-        display: block;
-        object-fit: contain;
-    }
+/* Ton style existant pour les numéros reste inchangé */
+.number {
+    position: absolute;
+    color: white;
+    font-size: 0;
+    background-color: rgba(185, 184, 184, 0.5);
+    padding: 0;
+    border-radius: 5px;
+    transform: translate(-50%, -50%);
+    transition: background-color 0.1s ease, transform 0.1s ease, font-size 0.1s ease;
+}
 
-    .number {
-        position: absolute;
-        color: white;
-        font-size: 0;
-        background-color: rgba(185, 184, 184, 0.5);
-        padding: 0;
-        border-radius: 5px;
-        transition: background-color 0.1s ease, transform 0.2s ease, font-size 0.2s ease;
-        transform: translate(-50%, -50%);
-    }
-
-    .number:hover {
-        background-color: rgba(255, 255, 255, 0.7);
-        transform: translate(-50%, -50%) scale(1.2);
-        font-size: 14px;
-    }
-
-    .number.found {
-        background-color: rgba(255, 0, 0, 0.7);
-        transform: translate(-50%, -50%) scale(1.5);
-        font-size: 18px;
-    }
-
-    .search-box, .password-box {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        background-color: rgba(0, 0, 0, 0.6);
-        padding: 10px;
-        border-radius: 15px;
-        color: white;
-        border: 2px solid rgb(255, 0, 0);
-        z-index: 100;
-    }
-
-    .password-box {
-        top: 70px;
-    }
-
-    input {
-        border-radius: 10px;
-        border: none;
-        padding: 5px;
-        outline: none;
-    }
-
-    button {
-        border-radius: 10px;
-        border: none;
-        padding: 5px 10px;
-        background-color: red;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .image-container {
-        position: fixed;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 200px;
-        height: 200px;
-        display: none;
-        background: rgba(0, 0, 0, 0.7);
-        padding: 5px;
-        border-radius: 10px;
-        border: 2px solid rgba(255, 0, 0, 0.6);
-        opacity: 0;
-        transition: opacity 0.5s ease;
-        z-index: 150;
-    }
-
-    .image-container.show {
-        display: block;
-        opacity: 1;
-    }
-
-    .image-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-
-    .close-btn {
-        position: absolute;
-        top: 3px;
-        right: 5px;
-        color: white;
-        font-size: 14px;
-        cursor: pointer;
-        font-weight: bold;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 2px 5px;
-        border-radius: 5px;
-    }
-
-    .close-btn:hover {
-        background: red;
-    }
-
-    /* === Écran d’intro === */
-    #introScreen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(to bottom, #000, #111);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        pointer-events: none;
-    }
-
-    .intro-content {
-        text-align: center;
-        color: white;
-        font-family: "Courier New", monospace;
-    }
-
-    .progress-bar {
-        width: 300px;
-        height: 10px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 5px;
-        overflow: hidden;
-        margin: 0 auto;
-    }
-
-    .progress {
-        width: 0%;
-        height: 100%;
-        background: red;
-    }
-
-    .fade-out {
-        animation: fadeOut 1s ease forwards;
-    }
-
-    @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
-    }
+.number:hover {
+    background-color: rgba(255, 255, 255, 0.7);
+    transform: translate(-50%, -50%) scale(1.2);
+    font-size: 14px;
+}
 </style>
-</head>
 
 <body>
-
-    <!-- === INTRO === -->
-    <div id="introScreen">
-        <div class="intro-content">
-            <h1>💻 Bonjour MCD...</h1>
-            <p>Chargement du système MAS...</p>
-            <div class="progress-bar"><div class="progress"></div></div>
-            <div id="progressText">0%</div>
-        </div>
-    </div>
-
     <!-- === PLAN === -->
     <div class="plan-container" id="planContainer">
-        <img id="planImage" src="mas.jpg" alt="Plan MAS">
+        <div class="plan-zoom-wrapper" id="zoomWrapper">
+            <div class="zoom-content" id="zoomContent">
+                <img id="planImage" src="mas.jpg" alt="Plan MAS">
+            </div>
+        </div>
     </div>
-
-    <!-- === CONTROLES === -->
-    <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Rechercher un numéro">
-        <button onclick="searchNumber()">🔍</button>
-    </div>
-
-    <div class="password-box">
-        <input type="password" id="passwordInput" placeholder="Mot de passe">
-        <button onclick="validatePassword()">✔</button>
-    </div>
-
-    <div class="image-container" id="imageContainer">
-        <span class="close-btn" onclick="closeImage()">X</span>
-        <img id="imageDisplay">
-    </div>
+</body>
 
 <script>
-/* === Intro === */
-window.addEventListener("load", () => {
-    const intro = document.getElementById("introScreen");
-    const progress = document.querySelector(".progress");
-    const progressText = document.getElementById("progressText");
-    let width = 0;
-
-    const interval = setInterval(() => {
-        width++;
-        progress.style.width = width + "%";
-        progressText.textContent = width + "%";
-        if (width >= 100) {
-            clearInterval(interval);
-            intro.classList.add("fade-out");
-            setTimeout(() => { intro.style.display = "none"; }, 1000);
-        }
-    }, 25);
-});
-
-/* === Données === */
-const correctPassword = "17061977";
-let isPasswordValid = false;
-const imagePaths = {
-    "508": "images/508.png",
-    "507": "images/507.png",
-    "506": "images/506.png",
-    "505": "images/505.png",
-    "228": "images/228.jpg",
-    "229": "images/229.jpg",
-    "0": "images/0.jpg",
-};
-
-const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
+/* === Variables globales === */
+const zoomWrapper = document.getElementById("zoomWrapper");
+const zoomContent = document.getElementById("zoomContent");
 const planImage = document.getElementById("planImage");
-const planContainer = document.getElementById("planContainer");
+let scale = 1, minScale = 1, maxScale = 5;
+let startDistance = 0, lastScale = 1;
+let panX = 0, panY = 0;
+let lastPanX = 0, lastPanY = 0;
+let isPanning = false, lastTouch = [];
 
-/* === Chargement des numéros après affichage du plan === */
-planImage.onload = () => {
-    restoreNumbers();
-};
-
+/* === Données de numéros === */
+const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
 function restoreNumbers() {
     for (const number in numbers) {
         const { xRatio, yRatio } = numbers[number];
@@ -269,101 +67,80 @@ function restoreNumbers() {
     }
 }
 
-/* === Placement des numéros en coordonnées relatives === */
 function createNumberElement(number, xRatio, yRatio) {
-    const numberElement = document.createElement("div");
-    numberElement.classList.add("number");
-    numberElement.textContent = number;
-    numberElement.style.left = (xRatio * planImage.clientWidth + planImage.offsetLeft) + "px";
-    numberElement.style.top = (yRatio * planImage.clientHeight + planImage.offsetTop) + "px";
-
-    numberElement.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (isPasswordValid) modifyOrDeleteNumber(number);
-    });
-
-    planContainer.appendChild(numberElement);
-    numbers[number] = { xRatio, yRatio };
-    localStorage.setItem("numbers", JSON.stringify(numbers));
+    const el = document.createElement("div");
+    el.classList.add("number");
+    el.textContent = number;
+    el.dataset.xRatio = xRatio;
+    el.dataset.yRatio = yRatio;
+    positionNumber(el);
+    zoomContent.appendChild(el);
 }
 
-/* === Ajouter un numéro === */
-planContainer.addEventListener("click", (event) => {
-    if (!isPasswordValid) return;
+function positionNumber(el) {
     const rect = planImage.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const xRatio = x / rect.width;
-    const yRatio = y / rect.height;
+    const xRatio = parseFloat(el.dataset.xRatio);
+    const yRatio = parseFloat(el.dataset.yRatio);
+    const x = xRatio * planImage.naturalWidth;
+    const y = yRatio * planImage.naturalHeight;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+}
 
-    const number = prompt("Entrez un nombre à placer :");
-    if (number && !isNaN(number)) {
-        createNumberElement(number, xRatio, yRatio);
+/* === Fonction de mise à jour du zoom === */
+function updateTransform() {
+    zoomContent.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${scale})`;
+}
+
+/* === Gestion du pincement pour zoom === */
+zoomWrapper.addEventListener("touchstart", e => {
+    if (e.touches.length === 2) {
+        startDistance = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+        );
+        lastScale = scale;
+    } else if (e.touches.length === 1) {
+        isPanning = true;
+        lastTouch = [e.touches[0].pageX, e.touches[0].pageY];
     }
 });
 
-/* === Modifier ou supprimer === */
-function modifyOrDeleteNumber(number) {
-    const action = prompt("Tapez 1 pour modifier ou 2 pour supprimer :");
-    if (action === "1") {
-        const newNumber = prompt("Entrez le nouveau numéro :");
-        if (newNumber && !isNaN(newNumber)) {
-            numbers[newNumber] = numbers[number];
-            delete numbers[number];
-            localStorage.setItem("numbers", JSON.stringify(numbers));
-            location.reload();
-        }
-    } else if (action === "2") {
-        delete numbers[number];
-        localStorage.setItem("numbers", JSON.stringify(numbers));
-        location.reload();
+zoomWrapper.addEventListener("touchmove", e => {
+    e.preventDefault();
+    if (e.touches.length === 2) {
+        const newDistance = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+        );
+        const scaleChange = newDistance / startDistance;
+        scale = Math.min(maxScale, Math.max(minScale, lastScale * scaleChange));
+        updateTransform();
+    } else if (e.touches.length === 1 && isPanning) {
+        const dx = e.touches[0].pageX - lastTouch[0];
+        const dy = e.touches[0].pageY - lastTouch[1];
+        panX += dx;
+        panY += dy;
+        lastTouch = [e.touches[0].pageX, e.touches[0].pageY];
+        updateTransform();
     }
-}
+});
 
-/* === Recherche === */
-function searchNumber() {
-    const searchTerm = document.getElementById("searchInput").value.trim();
-    document.querySelectorAll(".number").forEach(el => el.classList.remove("found"));
+zoomWrapper.addEventListener("touchend", () => {
+    isPanning = false;
+});
 
-    if (numbers[searchTerm]) {
-        document.querySelectorAll(".number").forEach(el => {
-            if (el.textContent === searchTerm) el.classList.add("found");
-        });
-        displayImage(searchTerm);
-    }
-}
+/* === Zoom à la molette (desktop) === */
+zoomWrapper.addEventListener("wheel", e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    scale = Math.min(maxScale, Math.max(minScale, scale + delta));
+    updateTransform();
+});
 
-/* === Image associée === */
-function displayImage(number) {
-    if (imagePaths[number]) {
-        document.getElementById("imageDisplay").src = imagePaths[number];
-        document.getElementById("imageContainer").classList.add("show");
-    }
-}
-function closeImage() {
-    document.getElementById("imageContainer").classList.remove("show");
-}
-
-/* === Mot de passe === */
-function validatePassword() {
-    const pwd = document.getElementById("passwordInput").value;
-    if (pwd === correctPassword) {
-        isPasswordValid = true;
-        alert("Mot de passe correct, vous pouvez modifier les numéros.");
-    } else alert("Mot de passe incorrect !");
-}
-
-/* === Adapter les numéros à la taille du plan quand on tourne l’écran === */
-window.addEventListener("resize", () => {
-    document.querySelectorAll(".number").forEach(el => el.remove());
+/* === Chargement du plan === */
+planImage.onload = () => {
     restoreNumbers();
-});
-window.addEventListener("orientationchange", () => {
-    setTimeout(() => {
-        document.querySelectorAll(".number").forEach(el => el.remove());
-        restoreNumbers();
-    }, 400);
-});
+    updateTransform();
+};
 </script>
-</body>
-</html>
