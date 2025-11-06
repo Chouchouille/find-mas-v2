@@ -12,9 +12,44 @@
     overflow: hidden;
     background: black;
     font-family: Arial, sans-serif;
-    touch-action: none; /* empêche Safari de zoomer */
+    touch-action: none;
   }
 
+  /* === Écran d’intro === */
+  #introScreen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle, #000000 0%, #2a0000 80%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 1.2s ease-in-out;
+    cursor: pointer;
+  }
+  #introScreen h1 {
+    font-size: 2rem;
+    color: red;
+    text-shadow: 0 0 15px red;
+    margin: 0;
+  }
+  #introScreen p {
+    font-size: 1rem;
+    margin-top: 15px;
+    color: white;
+  }
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; visibility: hidden; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* === Carte === */
   #zoomContainer {
     position: relative;
     width: 100%;
@@ -45,6 +80,12 @@
     background: red !important;
     color: white !important;
     font-weight: bold;
+    animation: blink 1s ease-in-out 2;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
   }
 
   .search-box, .password-box {
@@ -92,25 +133,31 @@
 </head>
 <body>
 
-<!-- Barre de recherche + bouton d’effacement -->
+<!-- === INTRO === -->
+<div id="introScreen" onclick="hideIntro()">
+  <h1>Bienvenue sur la carte MAS</h1>
+  <p>Touchez l’écran ou attendez quelques secondes pour commencer...</p>
+</div>
+
+<!-- === Barre de recherche === -->
 <div class="search-box">
   <input type="text" id="searchInput" placeholder="Rechercher un numéro">
   <button onclick="searchNumber()">Rechercher</button>
   <button id="resetButton" onclick="resetNumbers()" style="background:darkred; display:none;">🗑️ Effacer tout</button>
 </div>
 
-<!-- Mot de passe -->
+<!-- === Mot de passe === -->
 <div class="password-box">
   <input type="password" id="passwordInput" placeholder="Mot de passe">
   <button onclick="validatePassword()">Valider</button>
 </div>
 
-<!-- Image d'affichage -->
+<!-- === Image d'affichage === -->
 <div class="image-container" id="imageContainer">
   <img id="imageDisplay">
 </div>
 
-<!-- Zone zoomable -->
+<!-- === Zone zoomable === -->
 <div id="zoomContainer"></div>
 
 <script>
@@ -126,10 +173,8 @@ const correctPassword = "17061977";
 let isPasswordValid = false;
 const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
 
-// === Liste d’images associées ===
 const imagePaths = {
-  "0": "images/0.JPG",
-           "508": "images/508.png",  
+          "508": "images/508.png",  
             "507": "images/507.png",  
             "506": "images/506.png",
             "505": "images/505.png",
@@ -422,9 +467,21 @@ const imagePaths = {
             "451":"images/451.jpg",
             "174": "images/174.jpg",
 
+            "0": "images/0.JPG",
+
 };
 
-// === Restaure les numéros enregistrés ===
+// === INTRO ===
+function hideIntro() {
+  const intro = document.getElementById("introScreen");
+  intro.style.animation = "fadeOut 1s forwards";
+  setTimeout(() => intro.remove(), 1000);
+}
+window.addEventListener("load", () => {
+  setTimeout(hideIntro, 3000); // disparaît après 3 secondes
+});
+
+// === RESTAURE LES NUMÉROS ===
 restoreNumbers();
 
 function restoreNumbers() {
@@ -518,7 +575,7 @@ function resetNumbers() {
   }
 }
 
-// === Zoom & déplacement ===
+// === ZOOM & DÉPLACEMENT ===
 function getDistance(touches) {
   const [t1, t2] = touches;
   const dx = t2.clientX - t1.clientX;
@@ -530,7 +587,6 @@ function updateTransform() {
   zoomContainer.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
 }
 
-// Souris
 zoomContainer.addEventListener("mousedown", (e) => {
   isDragging = true;
   startX = e.clientX - lastPosX;
@@ -548,7 +604,6 @@ window.addEventListener("mouseup", () => {
   lastPosY = posY;
 });
 
-// Tactile
 zoomContainer.addEventListener("touchstart", (e) => {
   if (e.touches.length === 2) {
     startDistance = getDistance(e.touches);
