@@ -1,157 +1,346 @@
-<style>
-/* === CONTENEUR ZOOMABLE === */
-.plan-zoom-wrapper {
-    position: relative;
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-    touch-action: none; /* essentiel pour les gestes tactiles */
-    background-color: #111;
-}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rechercher MAS</title>
+    <style>
+        /* === CODE DE BASE === */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 90vh;
+            background-image: url('mas.jpg');
+            background-size: cover;
+            font-family: Arial, sans-serif;
+        }
 
-.zoom-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform-origin: center center;
-    transform: translate(-50%, -50%) scale(1);
-    transition: transform 0.05s linear;
-}
+        .container {
+            position: relative;
+            height: 100%;
+            cursor: pointer;
+        }
 
-/* === Style des numéros === */
-.number {
-    position: absolute;
-    color: white;
-    font-size: 0;
-    background-color: rgba(185, 184, 184, 0.5);
-    padding: 0;
-    border-radius: 5px;
-    transform: translate(-50%, -50%);
-    transition: background-color 0.1s ease, transform 0.1s ease, font-size 0.1s ease;
-}
+        .number {
+            position: absolute;
+            color: white;
+            font-size: 0px;
+            background-color: rgba(185, 184, 184, 0.5);
+            padding: 0px;
+            border-radius: 5px;
+            transition: background-color 0.1s ease, transform 0.2s ease, font-size 0.2s ease;
+        }
 
-.number:hover {
-    background-color: rgba(255, 255, 255, 0.7);
-    transform: translate(-50%, -50%) scale(1.2);
-    font-size: 14px;
-}
+        .number:hover {
+            background-color: rgba(255, 255, 255, 0.7);
+            transform: scale(1.2);
+            font-size: 14px;
+        }
 
-img {
-    max-width: none;
-    user-select: none;
-    -webkit-user-drag: none;
-    touch-action: none;
-}
-</style>
+        .number.found {
+            background-color: rgba(255, 0, 0, 0.7);
+            transform: scale(1.5);
+            font-size: 18px;
+        }
 
+        .search-box, .password-box {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 20px;
+            color: white;
+            border: 2px solid rgb(255, 0, 0);
+        }
+
+        .password-box {
+            top: 80px;
+            display: block;
+        }
+
+        .image-container {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            display: none;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 0, 0, 0.6);
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.3s ease;
+        }
+
+        .image-container.show {
+            display: block;
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+
+        .close-btn:hover {
+            background: red;
+        }
+
+        /* === INTRO BONJOUR XAVIER === */
+        #introScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #000, #111);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .intro-content {
+            text-align: center;
+            color: white;
+            font-family: "Courier New", monospace;
+        }
+
+        .intro-content h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .intro-content p {
+            font-size: 1.2em;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: red;
+        }
+
+        #progressText {
+            margin-top: 10px;
+            font-size: 1.2em;
+            color: #ff4444;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .fade-out {
+            animation: fadeOut 1s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
+</head>
 <body>
-    <div class="plan-container" id="planContainer">
-        <div class="plan-zoom-wrapper" id="zoomWrapper">
-            <div class="zoom-content" id="zoomContent">
-                <img id="planImage" src="mas.jpg" alt="Plan MAS">
+
+    <!-- === INTRO BONJOUR XAVIER === -->
+    <div id="introScreen">
+        <div class="intro-content">
+            <h1>💻 Bonjour Xavier...</h1>
+            <p>Chargement du système MAS...</p>
+            <div class="progress-bar">
+                <div class="progress"></div>
             </div>
+            <div id="progressText">0%</div>
         </div>
     </div>
 
-<script>
-/* === Variables globales === */
-const zoomWrapper = document.getElementById("zoomWrapper");
-const zoomContent = document.getElementById("zoomContent");
-const planImage = document.getElementById("planImage");
+    <!-- === CONTENU PRINCIPAL === -->
+    <div class="container" id="container"></div>
 
-let scale = 1, minScale = 1, maxScale = 5;
-let startDistance = 0, lastScale = 1;
-let panX = 0, panY = 0;
-let lastTouch = [];
-let isPanning = false;
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Rechercher un numéro">
+        <button onclick="searchNumber()">Rechercher</button>
+    </div>
 
-/* === Données des numéros === */
-const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
+    <div class="password-box" id="passwordBox">
+        <input type="password" id="passwordInput" placeholder="Mot de passe">
+        <button onclick="validatePassword()">Valider</button>
+    </div>
 
-function restoreNumbers() {
-    for (const number in numbers) {
-        const { xRatio, yRatio } = numbers[number];
-        createNumberElement(number, xRatio, yRatio);
-    }
-}
+    <div class="image-container" id="imageContainer">
+        <span class="close-btn" onclick="closeImage()">X</span>
+        <img id="imageDisplay" onclick="enlargeImage()">
+    </div>
 
-function createNumberElement(number, xRatio, yRatio) {
-    const el = document.createElement("div");
-    el.classList.add("number");
-    el.textContent = number;
-    el.dataset.xRatio = xRatio;
-    el.dataset.yRatio = yRatio;
-    positionNumber(el);
-    zoomContent.appendChild(el);
-}
+    <script>
+        // === INTRO FONCTIONNELLE ===
+        window.addEventListener("load", () => {
+            const intro = document.getElementById("introScreen");
+            const progress = document.querySelector(".progress");
+            const progressText = document.getElementById("progressText");
+            let width = 0;
 
-function positionNumber(el) {
-    const xRatio = parseFloat(el.dataset.xRatio);
-    const yRatio = parseFloat(el.dataset.yRatio);
-    const x = xRatio * planImage.naturalWidth;
-    const y = yRatio * planImage.naturalHeight;
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
-}
+            const interval = setInterval(() => {
+                width++;
+                progress.style.width = width + "%";
+                progressText.textContent = width + "%";
 
-/* === Mise à jour du zoom et du déplacement === */
-function updateTransform() {
-    zoomContent.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${scale})`;
-}
+                if (width >= 100) {
+                    clearInterval(interval);
+                    intro.classList.add("fade-out");
+                    setTimeout(() => { intro.style.display = "none"; }, 1000);
+                }
+            }, 30);
+        });
 
-/* === Gestes tactiles === */
-zoomWrapper.addEventListener("touchstart", e => {
-    if (e.touches.length === 2) {
-        startDistance = Math.hypot(
-            e.touches[0].pageX - e.touches[1].pageX,
-            e.touches[0].pageY - e.touches[1].pageY
-        );
-        lastScale = scale;
-    } else if (e.touches.length === 1) {
-        isPanning = true;
-        lastTouch = [e.touches[0].pageX, e.touches[0].pageY];
-    }
-});
+        // === RESTE DU CODE DE BASE ===
+        const correctPassword = "17061977";
+        let isPasswordValid = false;
 
-zoomWrapper.addEventListener("touchmove", e => {
-    e.preventDefault();
+        const imagePaths = {
+            "508": "images/508.png",  
+            "507": "images/507.png",  
+            "506": "images/506.png",
+            "505": "images/505.png",
+            "228":"images/228.jpg",
+            "229": "images/229.jpg",
+            "0": "images/0.jpg",
+        };
 
-    if (e.touches.length === 2) {
-        // Pincement pour zoom
-        const newDistance = Math.hypot(
-            e.touches[0].pageX - e.touches[1].pageX,
-            e.touches[0].pageY - e.touches[1].pageY
-        );
-        const scaleChange = newDistance / startDistance;
-        scale = Math.min(maxScale, Math.max(minScale, lastScale * scaleChange));
-        updateTransform();
-    } else if (e.touches.length === 1 && isPanning) {
-        // Déplacement (pan)
-        const dx = e.touches[0].pageX - lastTouch[0];
-        const dy = e.touches[0].pageY - lastTouch[1];
-        panX += dx;
-        panY += dy;
-        lastTouch = [e.touches[0].pageX, e.touches[0].pageY];
-        updateTransform();
-    }
-});
+        const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
+        restoreNumbers();
 
-zoomWrapper.addEventListener("touchend", () => {
-    isPanning = false;
-});
+        function restoreNumbers() {
+            for (const number in numbers) {
+                const { x, y } = numbers[number];
+                createNumberElement(number, x, y);
+            }
+        }
 
-/* === Zoom à la molette (desktop) === */
-zoomWrapper.addEventListener("wheel", e => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    scale = Math.min(maxScale, Math.max(minScale, scale + delta));
-    updateTransform();
-});
+        function createNumberElement(number, x, y) {
+            const numberElement = document.createElement("div");
+            numberElement.classList.add("number");
+            numberElement.textContent = number;
+            numberElement.style.left = `${x}px`;
+            numberElement.style.top = `${y}px`;
 
-/* === Chargement du plan === */
-planImage.onload = () => {
-    restoreNumbers();
-    updateTransform();
-};
-</script>
+            numberElement.addEventListener("click", function () {
+                if (isPasswordValid) {
+                    modifyOrDeleteNumber(number);
+                }
+            });
+
+            document.getElementById("container").appendChild(numberElement);
+            numbers[number] = { x, y };
+            localStorage.setItem("numbers", JSON.stringify(numbers));
+        }
+
+        document.getElementById("container").addEventListener("click", function (event) {
+            if (!isPasswordValid) return;
+
+            const number = prompt("Entrez un nombre à placer :");
+            if (number && !isNaN(number)) {
+                createNumberElement(number, event.clientX, event.clientY);
+            }
+        });
+
+        function modifyOrDeleteNumber(number) {
+            const action = prompt("Tapez 1 pour modifier ou 2 pour supprimer :");
+            if (action === "1") {
+                const newNumber = prompt("Entrez le nouveau numéro :");
+                if (newNumber && !isNaN(newNumber)) {
+                    numbers[newNumber] = { ...numbers[number] };
+                    delete numbers[number];
+                    localStorage.setItem("numbers", JSON.stringify(numbers));
+                    location.reload();
+                }
+            } else if (action === "2") {
+                delete numbers[number];
+                localStorage.setItem("numbers", JSON.stringify(numbers));
+                location.reload();
+            }
+        }
+
+        function searchNumber() {
+            const searchTerm = document.getElementById("searchInput").value.trim();
+            for (const key in numbers) {
+                document.querySelectorAll(".number").forEach(el => el.classList.remove("found"));
+            }
+
+            if (numbers[searchTerm]) {
+                document.querySelectorAll(".number").forEach(el => {
+                    if (el.textContent === searchTerm) {
+                        el.classList.add("found");
+                    }
+                });
+                displayImage(searchTerm);
+            }
+        }
+
+        function displayImage(number) {
+            if (imagePaths[number]) {
+                document.getElementById("imageDisplay").src = imagePaths[number];
+                document.getElementById("imageContainer").classList.add("show");
+            }
+        }
+
+        function closeImage() {
+            document.getElementById("imageContainer").classList.remove("show");
+        }
+
+        function enlargeImage() {
+            window.open(document.getElementById("imageDisplay").src, "_blank");
+        }
+
+        function validatePassword() {
+            if (document.getElementById("passwordInput").value === correctPassword) {
+                isPasswordValid = true;
+                alert("Mot de passe correct, vous pouvez modifier les numéros.");
+            } else {
+                alert("Mot de passe incorrect !");
+            }
+        }
+
+        document.getElementById("searchInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") searchNumber();
+        });
+
+        document.getElementById("passwordInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") validatePassword();
+        });
+    </script>
 </body>
+</html>
