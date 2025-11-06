@@ -1,391 +1,266 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#000000">
-  <title>Rechercher MAS</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      background-color: black;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      -webkit-user-select: none;
-      user-select: none;
-      touch-action: none; /* empêche Safari de zoomer lui-même */
-    }
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Rechercher MAS</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: black;
+    font-family: Arial, sans-serif;
+    touch-action: none; /* évite les zooms safari */
+  }
 
-    #zoomContainer {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      transform-origin: center center;
-      transition: transform 0.05s linear;
-    }
+  #zoomContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-origin: center center;
+    background-image: url('mas.jpg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
 
-    .container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background-image: url('mas.jpg');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-    }
+  .number {
+    position: absolute;
+    color: white;
+    background-color: rgba(185, 184, 184, 0.6);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 12px;
+    transform: translate(-50%, -50%);
+    transition: background 0.2s;
+  }
 
-    .number {
-      position: absolute;
-      color: white;
-      font-size: 0;
-      background-color: rgba(185, 184, 184, 0.5);
-      padding: 2px 4px;
-      border-radius: 4px;
-      transform: translate(-50%, -50%);
-      transition: background-color 0.1s ease, font-size 0.2s ease;
-    }
+  .number:hover {
+    background: rgba(255,255,255,0.7);
+  }
 
-    .number:active {
-      background-color: rgba(255, 255, 255, 0.7);
-      font-size: 14px;
-    }
+  .number.found {
+    background: rgba(255,0,0,0.7);
+  }
 
-    .number.found {
-      background-color: rgba(255, 0, 0, 0.7);
-      font-size: 18px;
-    }
+  .search-box, .password-box {
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: 2px solid red;
+    border-radius: 20px;
+    padding: 10px;
+    display: flex;
+    gap: 5px;
+    z-index: 10;
+  }
+  .password-box { top: 70px; }
 
-    .search-box, .password-box {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: rgba(0, 0, 0, 0.6);
-      padding: 10px;
-      border-radius: 20px;
-      color: white;
-      border: 2px solid rgb(255, 0, 0);
-      z-index: 10;
-      display: flex;
-      gap: 5px;
-      justify-content: center;
-    }
-
-    .password-box {
-      top: 80px;
-    }
-
-    .image-container {
-      position: fixed;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 200px;
-      display: none;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 5px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.4);
-      border: 2px solid rgba(255, 0, 0, 0.6);
-      opacity: 0;
-      transition: opacity 0.5s ease, transform 0.3s ease;
-      z-index: 20;
-    }
-
-    .image-container.show {
-      display: block;
-      opacity: 1;
-      transform: translateX(-50%) scale(1);
-    }
-
-    .image-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 3px;
-      right: 5px;
-      color: white;
-      font-size: 14px;
-      cursor: pointer;
-      font-weight: bold;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 2px 5px;
-      border-radius: 5px;
-    }
-
-    #introScreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to bottom, #000, #111);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
-
-    .intro-content {
-      text-align: center;
-      color: white;
-      font-family: "Courier New", monospace;
-    }
-
-    .progress-bar {
-      width: 300px;
-      height: 10px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 5px;
-      overflow: hidden;
-      margin: 0 auto;
-    }
-
-    .progress {
-      width: 0%;
-      height: 100%;
-      background: red;
-    }
-
-    #progressText {
-      margin-top: 10px;
-      font-size: 1.2em;
-      color: #ff4444;
-      font-weight: bold;
-    }
-
-    @media (max-width: 768px) {
-      .search-box, .password-box {
-        width: 90%;
-        font-size: 16px;
-      }
-
-      .image-container {
-        width: 80%;
-        height: auto;
-        max-height: 50vh;
-      }
-    }
-  </style>
+  .image-container {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 200px;
+    display: none;
+    background: rgba(0,0,0,0.7);
+    border-radius: 10px;
+    border: 2px solid red;
+    z-index: 20;
+  }
+  .image-container.show { display: block; }
+  .image-container img { width:100%; height:100%; object-fit:contain; }
+</style>
 </head>
 <body>
 
-  <!-- Intro -->
-  <div id="introScreen">
-    <div class="intro-content">
-      <h1>💻 Bonjour Xavier...</h1>
-      <p>Chargement du système MAS...</p>
-      <div class="progress-bar"><div class="progress"></div></div>
-      <div id="progressText">0%</div>
-    </div>
-  </div>
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="Rechercher un numéro">
+  <button onclick="searchNumber()">Rechercher</button>
+</div>
 
-  <!-- Conteneur principal avec zoom -->
-  <div id="zoomContainer">
-    <div class="container" id="container"></div>
-  </div>
+<div class="password-box">
+  <input type="password" id="passwordInput" placeholder="Mot de passe">
+  <button onclick="validatePassword()">Valider</button>
+</div>
 
-  <!-- Recherche et mot de passe -->
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Rechercher un numéro">
-    <button onclick="searchNumber()">Rechercher</button>
-  </div>
+<div class="image-container" id="imageContainer">
+  <img id="imageDisplay">
+</div>
 
-  <div class="password-box">
-    <input type="password" id="passwordInput" placeholder="Mot de passe">
-    <button onclick="validatePassword()">Valider</button>
-  </div>
+<div id="zoomContainer"></div>
 
-  <!-- Image affichée -->
-  <div class="image-container" id="imageContainer">
-    <span class="close-btn" onclick="closeImage()">X</span>
-    <img id="imageDisplay" onclick="enlargeImage()">
-  </div>
+<script>
+const zoomContainer = document.getElementById("zoomContainer");
+let scale = 1, lastScale = 1;
+let posX = 0, posY = 0;
+let lastPosX = 0, lastPosY = 0;
+let startX = 0, startY = 0;
+let isDragging = false;
+let startDistance = 0;
 
-  <input type="file" accept="image/*" capture="camera" id="cameraInput" style="display:none;">
-  <button style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:10;"
-          onclick="document.getElementById('cameraInput').click()">📷 Ajouter une image</button>
+const correctPassword = "17061977";
+let isPasswordValid = false;
+const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
+const imagePaths = {
+  "508": "images/508.png",
+  "507": "images/507.png",
+  "506": "images/506.png",
+  "505": "images/505.png",
+  "228": "images/228.jpg",
+  "229": "images/229.jpg",
+  "0": "images/0.jpg",
+};
 
-  <script>
-    // === INTRO ===
-    window.addEventListener("load", () => {
-      const intro = document.getElementById("introScreen");
-      const progress = document.querySelector(".progress");
-      const progressText = document.getElementById("progressText");
-      let width = 0;
-      const interval = setInterval(() => {
-        width++;
-        progress.style.width = width + "%";
-        progressText.textContent = width + "%";
-        if (width >= 100) {
-          clearInterval(interval);
-          intro.style.transition = "opacity 1s ease";
-          intro.style.opacity = "0";
-          setTimeout(() => { intro.style.display = "none"; }, 1000);
-        }
-      }, 30);
-    });
+restoreNumbers();
 
-    const tapEvent = ('ontouchstart' in window) ? 'touchstart' : 'click';
-    const correctPassword = "17061977";
-    let isPasswordValid = false;
-    const imagePaths = {
-      "508": "images/508.png",
-      "507": "images/507.png",
-      "506": "images/506.png",
-      "505": "images/505.png",
-      "228": "images/228.jpg",
-      "229": "images/229.jpg",
-      "0": "images/0.jpg",
-    };
+// === FONCTIONS NUMÉROS ===
+function restoreNumbers() {
+  for (const number in numbers) {
+    const { xPercent, yPercent } = numbers[number];
+    createNumberElement(number, xPercent, yPercent);
+  }
+}
 
-    const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
-    restoreNumbers();
+function createNumberElement(number, xPercent, yPercent) {
+  const el = document.createElement("div");
+  el.classList.add("number");
+  el.textContent = number;
+  el.style.left = `${xPercent}%`;
+  el.style.top = `${yPercent}%`;
+  el.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (isPasswordValid) modifyOrDeleteNumber(number);
+  });
+  zoomContainer.appendChild(el);
+  numbers[number] = { xPercent, yPercent };
+  localStorage.setItem("numbers", JSON.stringify(numbers));
+}
 
-    function restoreNumbers() {
-      for (const number in numbers) {
-        const { xPercent, yPercent } = numbers[number];
-        createNumberElement(number, xPercent, yPercent);
-      }
-    }
+zoomContainer.addEventListener("click", (e) => {
+  if (!isPasswordValid) return;
+  const rect = zoomContainer.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const xPercent = (x / rect.width) * 100;
+  const yPercent = (y / rect.height) * 100;
+  const number = prompt("Entrez un numéro :");
+  if (number && !isNaN(number)) createNumberElement(number, xPercent, yPercent);
+});
 
-    function createNumberElement(number, xPercent, yPercent) {
-      const el = document.createElement("div");
-      el.classList.add("number");
-      el.textContent = number;
-      el.style.left = `${xPercent}%`;
-      el.style.top = `${yPercent}%`;
-      el.addEventListener(tapEvent, () => {
-        if (isPasswordValid) modifyOrDeleteNumber(number);
-      });
-      document.getElementById("container").appendChild(el);
-      numbers[number] = { xPercent, yPercent };
+function modifyOrDeleteNumber(number) {
+  const action = prompt("Tapez 1 pour modifier ou 2 pour supprimer :");
+  if (action === "1") {
+    const newNum = prompt("Entrez le nouveau numéro :");
+    if (newNum && !isNaN(newNum)) {
+      numbers[newNum] = { ...numbers[number] };
+      delete numbers[number];
       localStorage.setItem("numbers", JSON.stringify(numbers));
+      location.reload();
     }
+  } else if (action === "2") {
+    delete numbers[number];
+    localStorage.setItem("numbers", JSON.stringify(numbers));
+    location.reload();
+  }
+}
 
-    document.getElementById("container").addEventListener(tapEvent, function (event) {
-      if (!isPasswordValid) return;
-      const touch = event.touches ? event.touches[0] : event;
-      const rect = this.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-      const xPercent = (x / rect.width) * 100;
-      const yPercent = (y / rect.height) * 100;
-      const number = prompt("Entrez un nombre à placer :");
-      if (number && !isNaN(number)) {
-        createNumberElement(number, xPercent, yPercent);
-      }
+function searchNumber() {
+  const val = document.getElementById("searchInput").value.trim();
+  document.querySelectorAll(".number").forEach(n => n.classList.remove("found"));
+  if (numbers[val]) {
+    document.querySelectorAll(".number").forEach(el => {
+      if (el.textContent === val) el.classList.add("found");
     });
+    displayImage(val);
+  }
+}
 
-    function modifyOrDeleteNumber(number) {
-      const action = prompt("Tapez 1 pour modifier ou 2 pour supprimer :");
-      if (action === "1") {
-        const newNumber = prompt("Entrez le nouveau numéro :");
-        if (newNumber && !isNaN(newNumber)) {
-          numbers[newNumber] = { ...numbers[number] };
-          delete numbers[number];
-          localStorage.setItem("numbers", JSON.stringify(numbers));
-          location.reload();
-        }
-      } else if (action === "2") {
-        delete numbers[number];
-        localStorage.setItem("numbers", JSON.stringify(numbers));
-        location.reload();
-      }
-    }
+function displayImage(number) {
+  if (imagePaths[number]) {
+    document.getElementById("imageDisplay").src = imagePaths[number];
+    document.getElementById("imageContainer").classList.add("show");
+  }
+}
 
-    function searchNumber() {
-      const searchTerm = document.getElementById("searchInput").value.trim();
-      document.querySelectorAll(".number").forEach(el => el.classList.remove("found"));
-      if (numbers[searchTerm]) {
-        document.querySelectorAll(".number").forEach(el => {
-          if (el.textContent === searchTerm) el.classList.add("found");
-        });
-        if (navigator.vibrate) navigator.vibrate(200);
-        displayImage(searchTerm);
-      }
-    }
+function validatePassword() {
+  if (document.getElementById("passwordInput").value === correctPassword) {
+    isPasswordValid = true;
+    alert("Mot de passe correct ✅");
+  } else alert("Mot de passe incorrect ❌");
+}
 
-    function displayImage(number) {
-      if (imagePaths[number]) {
-        document.getElementById("imageDisplay").src = imagePaths[number];
-        document.getElementById("imageContainer").classList.add("show");
-      }
-    }
+// === ZOOM & PAN (déplacement) ===
+function getDistance(touches) {
+  const [t1, t2] = touches;
+  const dx = t2.clientX - t1.clientX;
+  const dy = t2.clientY - t1.clientY;
+  return Math.sqrt(dx*dx + dy*dy);
+}
 
-    function closeImage() {
-      document.getElementById("imageContainer").classList.remove("show");
-    }
+function updateTransform() {
+  zoomContainer.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+}
 
-    function enlargeImage() {
-      window.open(document.getElementById("imageDisplay").src, "_blank");
-    }
+// Souris
+zoomContainer.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  startX = e.clientX - lastPosX;
+  startY = e.clientY - lastPosY;
+});
 
-    function validatePassword() {
-      if (document.getElementById("passwordInput").value === correctPassword) {
-        isPasswordValid = true;
-        alert("✅ Mot de passe correct, vous pouvez modifier les numéros.");
-      } else {
-        alert("❌ Mot de passe incorrect !");
-      }
-    }
+window.addEventListener("mousemove", (e) => {
+  if (!isDragging) return;
+  posX = e.clientX - startX;
+  posY = e.clientY - startY;
+  updateTransform();
+});
 
-    document.getElementById("cameraInput").addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const imgURL = URL.createObjectURL(file);
-        document.getElementById("imageDisplay").src = imgURL;
-        document.getElementById("imageContainer").classList.add("show");
-      }
-    });
+window.addEventListener("mouseup", () => {
+  isDragging = false;
+  lastPosX = posX;
+  lastPosY = posY;
+});
 
-    // === ZOOM TACTILE ===
-    const zoomContainer = document.getElementById("zoomContainer");
-    let scale = 1;
-    let startDistance = 0;
+// Tactile
+zoomContainer.addEventListener("touchstart", (e) => {
+  if (e.touches.length === 2) {
+    startDistance = getDistance(e.touches);
+  } else if (e.touches.length === 1) {
+    isDragging = true;
+    startX = e.touches[0].clientX - lastPosX;
+    startY = e.touches[0].clientY - lastPosY;
+  }
+});
 
-    function getDistance(touches) {
-      const [t1, t2] = touches;
-      const dx = t2.clientX - t1.clientX;
-      const dy = t2.clientY - t1.clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
+zoomContainer.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  if (e.touches.length === 2) {
+    const newDistance = getDistance(e.touches);
+    const zoom = newDistance / startDistance;
+    scale = Math.min(Math.max(lastScale * zoom, 1), 4);
+    updateTransform();
+  } else if (e.touches.length === 1 && isDragging) {
+    posX = e.touches[0].clientX - startX;
+    posY = e.touches[0].clientY - startY;
+    updateTransform();
+  }
+});
 
-    zoomContainer.addEventListener("touchstart", (e) => {
-      if (e.touches.length === 2) {
-        startDistance = getDistance(e.touches);
-      }
-    });
-
-    zoomContainer.addEventListener("touchmove", (e) => {
-      if (e.touches.length === 2) {
-        const newDistance = getDistance(e.touches);
-        const zoom = newDistance / startDistance;
-        let newScale = scale * zoom;
-        newScale = Math.max(1, Math.min(newScale, 3)); // limite le zoom
-        zoomContainer.style.transform = `scale(${newScale})`;
-      }
-    });
-
-    zoomContainer.addEventListener("touchend", (e) => {
-      if (e.touches.length < 2) {
-        const transform = getComputedStyle(zoomContainer).transform;
-        const matrix = new DOMMatrix(transform);
-        scale = matrix.a;
-      }
-    });
-  </script>
+zoomContainer.addEventListener("touchend", (e) => {
+  if (e.touches.length === 0) {
+    lastScale = scale;
+    lastPosX = posX;
+    lastPosY = posY;
+    isDragging = false;
+  }
+});
+</script>
 </body>
 </html>
