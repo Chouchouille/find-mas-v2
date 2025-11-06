@@ -12,7 +12,7 @@
     overflow: hidden;
     background: black;
     font-family: Arial, sans-serif;
-    touch-action: none; /* empêche Safari de zoomer par défaut */
+    touch-action: none; /* empêche Safari de zoomer */
   }
 
   #zoomContainer {
@@ -34,7 +34,7 @@
     border-radius: 4px;
     font-size: 12px;
     transform: translate(-50%, -50%);
-    transition: background 0.2s;
+    transition: background 0.2s, color 0.2s;
   }
 
   .number:hover {
@@ -42,7 +42,9 @@
   }
 
   .number.found {
-    background: rgba(255,0,0,0.7);
+    background: red !important;
+    color: white !important;
+    font-weight: bold;
   }
 
   .search-box, .password-box {
@@ -94,7 +96,7 @@
 <div class="search-box">
   <input type="text" id="searchInput" placeholder="Rechercher un numéro">
   <button onclick="searchNumber()">Rechercher</button>
-  <button onclick="resetNumbers()" style="background:darkred;">🗑️ Effacer tout</button>
+  <button id="resetButton" onclick="resetNumbers()" style="background:darkred; display:none;">🗑️ Effacer tout</button>
 </div>
 
 <!-- Mot de passe -->
@@ -123,8 +125,11 @@ let startDistance = 0;
 const correctPassword = "17061977";
 let isPasswordValid = false;
 const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
+
+// === Liste d’images associées ===
 const imagePaths = {
-                 "508": "images/508.png",  
+  "0": "images/0.JPG",
+           "508": "images/508.png",  
             "507": "images/507.png",  
             "506": "images/506.png",
             "505": "images/505.png",
@@ -417,13 +422,11 @@ const imagePaths = {
             "451":"images/451.jpg",
             "174": "images/174.jpg",
 
-            "0": "images/0.JPG",
-
 };
 
+// === Restaure les numéros enregistrés ===
 restoreNumbers();
 
-// === Gestion des numéros ===
 function restoreNumbers() {
   for (const number in numbers) {
     const { xPercent, yPercent } = numbers[number];
@@ -477,11 +480,14 @@ function modifyOrDeleteNumber(number) {
 function searchNumber() {
   const val = document.getElementById("searchInput").value.trim();
   document.querySelectorAll(".number").forEach(n => n.classList.remove("found"));
+
   if (numbers[val]) {
     document.querySelectorAll(".number").forEach(el => {
       if (el.textContent === val) el.classList.add("found");
     });
     displayImage(val);
+  } else {
+    alert("Numéro introuvable ❌");
   }
 }
 
@@ -496,11 +502,15 @@ function validatePassword() {
   if (document.getElementById("passwordInput").value === correctPassword) {
     isPasswordValid = true;
     alert("Mot de passe correct ✅");
+    document.getElementById("resetButton").style.display = "inline-block";
   } else alert("Mot de passe incorrect ❌");
 }
 
-// === Bouton effacer tout ===
 function resetNumbers() {
+  if (!isPasswordValid) {
+    alert("Accès refusé ❌");
+    return;
+  }
   if (confirm("⚠️ Voulez-vous vraiment supprimer tous les numéros du plan ?")) {
     localStorage.removeItem("numbers");
     document.querySelectorAll(".number").forEach(el => el.remove());
