@@ -223,7 +223,7 @@
 <div id="zoomContainer"></div>
 
 <script>
-/* === Intro avec barre de chargement === */
+/* === Barre de chargement === */
 const progressText = document.getElementById("progressText");
 let progress = 0;
 const interval = setInterval(() => {
@@ -246,36 +246,11 @@ window.addEventListener("load", () => {
   setTimeout(hideIntro, 3200);
 });
 
-/* === FONCTIONNALITÉS === */
-const zoomContainer = document.getElementById("zoomContainer");
+/* === Gestion de la taille === */
 const sizeBox = document.getElementById("sizeBox");
 const sizeRange = document.getElementById("sizeRange");
 const sizeValue = document.getElementById("sizeValue");
 
-let scale = 1, lastScale = 1;
-let posX = 0, posY = 0;
-let lastPosX = 0, lastPosY = 0;
-let startX = 0, startY = 0;
-let isDragging = false;
-let startDistance = 0;
-
-const correctPassword = "17061977";
-let isPasswordValid = false;
-const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
-
-const imagePaths = {
-  "0": "images/0.JPG",
-  "107": "images/107.jpg",
-  "124": "images/124.jpg",
-  "169": "images/169.jpg",
-  "370": "images/370.jpg",
-  "401": "images/401.jpg",
-  "505": "images/505.jpg",
-  "508": "images/508.jpg",
-  "510": "images/510.jpg"
-};
-
-/* === Gestion de la taille des numéros === */
 const savedSize = localStorage.getItem("numberSize") || 18;
 document.documentElement.style.setProperty("--number-size", savedSize + "px");
 sizeRange.value = savedSize;
@@ -288,13 +263,25 @@ sizeRange.addEventListener("input", () => {
   localStorage.setItem("numberSize", val);
 });
 
-restoreNumbers();
-function restoreNumbers() {
-  for (const number in numbers) {
-    const { xPercent, yPercent } = numbers[number];
-    createNumberElement(number, xPercent, yPercent);
+/* === Mot de passe === */
+const correctPassword = "17061977";
+let isPasswordValid = false;
+
+function validatePassword() {
+  const input = document.getElementById("passwordInput").value;
+  if (input === correctPassword) {
+    alert("Mot de passe correct ✅");
+    isPasswordValid = true;
+    document.getElementById("resetButton").style.display = "inline-block";
+    sizeBox.style.display = "flex"; // 🔥 le curseur devient visible ici
+  } else {
+    alert("Mot de passe incorrect ❌");
   }
 }
+
+/* === Fonctions de base de la carte === */
+const zoomContainer = document.getElementById("zoomContainer");
+const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
 
 function createNumberElement(number, xPercent, yPercent) {
   const el = document.createElement("div");
@@ -302,146 +289,31 @@ function createNumberElement(number, xPercent, yPercent) {
   el.textContent = number;
   el.style.left = `${xPercent}%`;
   el.style.top = `${yPercent}%`;
-  el.addEventListener("click", (e) => {
-    e.stopPropagation();
-    if (isPasswordValid) modifyOrDeleteNumber(number);
-  });
   zoomContainer.appendChild(el);
-  numbers[number] = { xPercent, yPercent };
-  localStorage.setItem("numbers", JSON.stringify(numbers));
 }
+
+for (const n in numbers) createNumberElement(n, numbers[n].xPercent, numbers[n].yPercent);
 
 zoomContainer.addEventListener("click", (e) => {
   if (!isPasswordValid) return;
   const rect = zoomContainer.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const xPercent = (x / rect.width) * 100;
-  const yPercent = (y / rect.height) * 100;
-  const number = prompt("Entrez un numéro :");
-  if (number && !isNaN(number)) createNumberElement(number, xPercent, yPercent);
-});
-
-function modifyOrDeleteNumber(number) {
-  const action = prompt("Tapez 1 pour modifier ou 2 pour supprimer :");
-  if (action === "1") {
-    const newNum = prompt("Entrez le nouveau numéro :");
-    if (newNum && !isNaN(newNum)) {
-      numbers[newNum] = { ...numbers[number] };
-      delete numbers[number];
-      localStorage.setItem("numbers", JSON.stringify(numbers));
-      location.reload();
-    }
-  } else if (action === "2") {
-    delete numbers[number];
+  const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+  const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+  const num = prompt("Entrez un numéro :");
+  if (num && !isNaN(num)) {
+    numbers[num] = { xPercent, yPercent };
     localStorage.setItem("numbers", JSON.stringify(numbers));
-    location.reload();
+    createNumberElement(num, xPercent, yPercent);
   }
-}
-
-function searchNumber() {
-  const val = document.getElementById("searchInput").value.trim();
-  document.querySelectorAll(".number").forEach(n => n.classList.remove("found"));
-
-  if (numbers[val]) {
-    document.querySelectorAll(".number").forEach(el => {
-      if (el.textContent === val) el.classList.add("found");
-    });
-    displayImage(val);
-  } else {
-    alert("Numéro introuvable ❌");
-  }
-}
-
-function displayImage(number) {
-  if (imagePaths[number]) {
-    document.getElementById("imageDisplay").src = imagePaths[number];
-    document.getElementById("imageContainer").classList.add("show");
-  }
-}
-
-function validatePassword() {
-  if (document.getElementById("passwordInput").value === correctPassword) {
-    isPasswordValid = true;
-    alert("Mot de passe correct ✅");
-    document.getElementById("resetButton").style.display = "inline-block";
-    sizeBox.style.display = "flex";
-  } else alert("Mot de passe incorrect ❌");
-}
+});
 
 function resetNumbers() {
-  if (!isPasswordValid) {
-    alert("Accès refusé ❌");
-    return;
-  }
-  if (confirm("⚠️ Voulez-vous vraiment supprimer tous les numéros du plan ?")) {
+  if (!isPasswordValid) return alert("Accès refusé ❌");
+  if (confirm("Supprimer tous les numéros ?")) {
     localStorage.removeItem("numbers");
     document.querySelectorAll(".number").forEach(el => el.remove());
-    alert("✅ Tous les numéros ont été supprimés !");
   }
 }
-
-/* === Zoom & Déplacement === */
-function getDistance(touches) {
-  const [t1, t2] = touches;
-  const dx = t2.clientX - t1.clientX;
-  const dy = t2.clientY - t1.clientY;
-  return Math.sqrt(dx*dx + dy*dy);
-}
-
-function updateTransform() {
-  zoomContainer.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-}
-
-zoomContainer.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  startX = e.clientX - lastPosX;
-  startY = e.clientY - lastPosY;
-});
-window.addEventListener("mousemove", (e) => {
-  if (!isDragging) return;
-  posX = e.clientX - startX;
-  posY = e.clientY - startY;
-  updateTransform();
-});
-window.addEventListener("mouseup", () => {
-  isDragging = false;
-  lastPosX = posX;
-  lastPosY = posY;
-});
-
-zoomContainer.addEventListener("touchstart", (e) => {
-  if (e.touches.length === 2) {
-    startDistance = getDistance(e.touches);
-  } else if (e.touches.length === 1) {
-    isDragging = true;
-    startX = e.touches[0].clientX - lastPosX;
-    startY = e.touches[0].clientY - lastPosY;
-  }
-});
-
-zoomContainer.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-  if (e.touches.length === 2) {
-    const newDistance = getDistance(e.touches);
-    const zoom = newDistance / startDistance;
-    scale = Math.min(Math.max(lastScale * zoom, 1), 4);
-    updateTransform();
-  } else if (e.touches.length === 1 && isDragging) {
-    posX = e.touches[0].clientX - startX;
-    posY = e.touches[0].clientY - startY;
-    updateTransform();
-  }
-});
-
-zoomContainer.addEventListener("touchend", (e) => {
-  if (e.touches.length === 0) {
-    lastScale = scale;
-    lastPosX = posX;
-    lastPosY = posY;
-    isDragging = false;
-  }
-});
 </script>
 </body>
 </html>
