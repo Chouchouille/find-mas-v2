@@ -7,8 +7,7 @@
 <title>Rechercher MAS</title>
 <style>
   :root {
-    /* 🔧 Taille facile à modifier */
-    --number-size: 7px;
+    --number-size: 18px;
   }
 
   body {
@@ -20,7 +19,7 @@
     touch-action: none;
   }
 
-  /* === Écran d’intro === */
+  /* === Intro === */
   #introScreen {
     position: fixed;
     inset: 0;
@@ -39,16 +38,14 @@
     font-size: 2rem;
     color: red;
     text-shadow: 0 0 15px red;
-    margin: 0;
   }
 
   #introScreen p {
     font-size: 1rem;
-    margin-top: 10px;
     color: white;
+    margin-top: 10px;
   }
 
-  /* === Barre de chargement === */
   .progress-container {
     position: relative;
     width: 220px;
@@ -115,10 +112,8 @@
     padding: 1px 2px;
     border-radius: 2px;
     transform: translate(-50%, -50%);
-    transition: background 0.2s, color 0.2s;
-    user-select: none;
-    /* ✅ applique la taille via la variable */
-    font-size: var(--number-size) !important;
+    font-size: var(--number-size);
+    transition: background 0.2s, color 0.2s, font-size 0.2s;
   }
 
   .number:hover {
@@ -137,9 +132,8 @@
     50% { opacity: 0.4; }
   }
 
-  .search-box, .password-box {
+  .search-box, .password-box, .size-box {
     position: fixed;
-    top: 15px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0,0,0,0.6);
@@ -150,8 +144,12 @@
     display: flex;
     gap: 5px;
     z-index: 10;
+    align-items: center;
   }
+
+  .search-box { top: 15px; }
   .password-box { top: 70px; }
+  .size-box { top: 125px; display: none; }
 
   .search-box button, .password-box button {
     border-radius: 10px;
@@ -160,6 +158,10 @@
     border: none;
     padding: 5px 10px;
     cursor: pointer;
+  }
+
+  input[type="range"] {
+    accent-color: red;
   }
 
   .image-container {
@@ -205,6 +207,13 @@
   <button onclick="validatePassword()">Valider</button>
 </div>
 
+<!-- === Curseur de taille === -->
+<div class="size-box" id="sizeBox">
+  <label for="sizeRange">Taille :</label>
+  <input type="range" id="sizeRange" min="8" max="50" step="1">
+  <span id="sizeValue"></span>
+</div>
+
 <!-- === Image d'affichage === -->
 <div class="image-container" id="imageContainer">
   <img id="imageDisplay">
@@ -214,7 +223,7 @@
 <div id="zoomContainer"></div>
 
 <script>
-/* === Intro + Barre de chargement === */
+/* === Intro avec barre de chargement === */
 const progressText = document.getElementById("progressText");
 let progress = 0;
 const interval = setInterval(() => {
@@ -239,6 +248,10 @@ window.addEventListener("load", () => {
 
 /* === FONCTIONNALITÉS === */
 const zoomContainer = document.getElementById("zoomContainer");
+const sizeBox = document.getElementById("sizeBox");
+const sizeRange = document.getElementById("sizeRange");
+const sizeValue = document.getElementById("sizeValue");
+
 let scale = 1, lastScale = 1;
 let posX = 0, posY = 0;
 let lastPosX = 0, lastPosY = 0;
@@ -254,7 +267,6 @@ const imagePaths = {
   "0": "images/0.JPG",
   "107": "images/107.jpg",
   "124": "images/124.jpg",
-  "138": "images/138.jpg",
   "169": "images/169.jpg",
   "370": "images/370.jpg",
   "401": "images/401.jpg",
@@ -262,6 +274,19 @@ const imagePaths = {
   "508": "images/508.jpg",
   "510": "images/510.jpg"
 };
+
+/* === Gestion de la taille des numéros === */
+const savedSize = localStorage.getItem("numberSize") || 18;
+document.documentElement.style.setProperty("--number-size", savedSize + "px");
+sizeRange.value = savedSize;
+sizeValue.textContent = savedSize + "px";
+
+sizeRange.addEventListener("input", () => {
+  const val = sizeRange.value;
+  document.documentElement.style.setProperty("--number-size", val + "px");
+  sizeValue.textContent = val + "px";
+  localStorage.setItem("numberSize", val);
+});
 
 restoreNumbers();
 function restoreNumbers() {
@@ -340,6 +365,7 @@ function validatePassword() {
     isPasswordValid = true;
     alert("Mot de passe correct ✅");
     document.getElementById("resetButton").style.display = "inline-block";
+    sizeBox.style.display = "flex";
   } else alert("Mot de passe incorrect ❌");
 }
 
@@ -419,4 +445,3 @@ zoomContainer.addEventListener("touchend", (e) => {
 </script>
 </body>
 </html>
-
