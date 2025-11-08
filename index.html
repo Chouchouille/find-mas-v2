@@ -6,6 +6,11 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Rechercher MAS</title>
 <style>
+  :root {
+    /* 🔧 Taille facile à modifier */
+    --number-size: 12px;
+  }
+
   body {
     margin: 0;
     height: 100vh;
@@ -19,31 +24,75 @@
   #introScreen {
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle, #000000 0%, #2a0000 80%);
+    background: radial-gradient(circle, #000000 0%, #200000 80%);
     color: white;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 100;
-    animation: fadeIn 1.2s ease-in-out;
+    animation: fadeIn 1s ease-in-out;
     cursor: pointer;
   }
+
   #introScreen h1 {
     font-size: 2rem;
     color: red;
     text-shadow: 0 0 15px red;
     margin: 0;
   }
+
   #introScreen p {
     font-size: 1rem;
-    margin-top: 15px;
+    margin-top: 10px;
     color: white;
   }
+
+  /* === Barre de chargement === */
+  .progress-container {
+    position: relative;
+    width: 220px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 25px;
+    box-shadow: 0 0 10px rgba(255,0,0,0.3);
+  }
+
+  .progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff0000, #ff5050, #ff0000);
+    background-size: 200% 100%;
+    animation: progressMove 3s linear forwards, lightWave 1s linear infinite;
+    border-radius: 6px;
+  }
+
+  /* Effet de lumière animée */
+  @keyframes lightWave {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  @keyframes progressMove {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+
+  /* Texte du pourcentage */
+  .progress-text {
+    margin-top: 10px;
+    font-size: 1rem;
+    color: white;
+    text-shadow: 0 0 10px red;
+  }
+
   @keyframes fadeOut {
     from { opacity: 1; }
     to { opacity: 0; visibility: hidden; }
   }
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -65,11 +114,12 @@
     position: absolute;
     color: white;
     background-color: rgba(185, 184, 184, 0.6);
-    padding: 1px 1px;
-    border-radius: 0.5px;
-    font-size: 0px;
+    padding: 1px 2px;
+    border-radius: 2px;
+    font-size: var(--number-size);
     transform: translate(-50%, -50%);
     transition: background 0.2s, color 0.2s;
+    user-select: none;
   }
 
   .number:hover {
@@ -137,6 +187,10 @@
 <div id="introScreen" onclick="hideIntro()">
   <h1>Bienvenue Xavier</h1>
   <p>Chargement en cours...</p>
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="progress-text" id="progressText">0%</div>
 </div>
 
 <!-- === Barre de recherche === -->
@@ -161,6 +215,30 @@
 <div id="zoomContainer"></div>
 
 <script>
+/* === Intro + Barre de chargement === */
+const progressText = document.getElementById("progressText");
+let progress = 0;
+const interval = setInterval(() => {
+  if (progress < 100) {
+    progress += 2;
+    progressText.textContent = progress + "%";
+  } else {
+    progressText.textContent = "Prêt !";
+    clearInterval(interval);
+  }
+}, 60);
+
+function hideIntro() {
+  const intro = document.getElementById("introScreen");
+  intro.style.animation = "fadeOut 1s forwards";
+  setTimeout(() => intro.remove(), 1000);
+}
+
+window.addEventListener("load", () => {
+  setTimeout(hideIntro, 3200);
+});
+
+/* === FONCTIONNALITÉS PRINCIPALES === */
 const zoomContainer = document.getElementById("zoomContainer");
 let scale = 1, lastScale = 1;
 let posX = 0, posY = 0;
@@ -174,7 +252,7 @@ let isPasswordValid = false;
 const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
 
 const imagePaths = {
-          "508": "images/508.png",  
+     "508": "images/508.png",  
             "507": "images/507.png",  
             "506": "images/506.png",
             "505": "images/505.png",
@@ -471,19 +549,8 @@ const imagePaths = {
 
 };
 
-// === INTRO ===
-function hideIntro() {
-  const intro = document.getElementById("introScreen");
-  intro.style.animation = "fadeOut 1s forwards";
-  setTimeout(() => intro.remove(), 1000);
-}
-window.addEventListener("load", () => {
-  setTimeout(hideIntro, 3000); // disparaît après 3 secondes
-});
-
-// === RESTAURE LES NUMÉROS ===
+/* === Restaure les numéros === */
 restoreNumbers();
-
 function restoreNumbers() {
   for (const number in numbers) {
     const { xPercent, yPercent } = numbers[number];
@@ -575,7 +642,7 @@ function resetNumbers() {
   }
 }
 
-// === ZOOM & DÉPLACEMENT ===
+/* === Zoom & Déplacement === */
 function getDistance(touches) {
   const [t1, t2] = touches;
   const dx = t2.clientX - t1.clientX;
@@ -639,12 +706,3 @@ zoomContainer.addEventListener("touchend", (e) => {
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
