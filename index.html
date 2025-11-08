@@ -19,7 +19,6 @@
     touch-action: none;
   }
 
-  /* === Intro === */
   #introScreen {
     position: fixed;
     inset: 0;
@@ -93,7 +92,6 @@
     to { opacity: 1; }
   }
 
-  /* === Carte === */
   #zoomContainer {
     position: relative;
     width: 100%;
@@ -126,7 +124,6 @@
     background: red !important;
     color: white !important;
     font-weight: bold;
-    animation: blink 0.8s ease-in-out 4;
     box-shadow: 0 0 12px red;
   }
 
@@ -187,7 +184,6 @@
 </head>
 <body>
 
-<!-- === INTRO === -->
 <div id="introScreen" onclick="hideIntro()">
   <h1>Bienvenue Xavier</h1>
   <p>Chargement en cours...</p>
@@ -197,36 +193,30 @@
   <div class="progress-text" id="progressText">0%</div>
 </div>
 
-<!-- === Barre de recherche === -->
 <div class="search-box">
   <input type="text" id="searchInput" placeholder="Rechercher un numéro">
   <button onclick="searchNumber()">Rechercher</button>
   <button id="resetButton" onclick="resetNumbers()" style="background:darkred; display:none;">🗑️ Effacer tout</button>
 </div>
 
-<!-- === Mot de passe === -->
 <div class="password-box">
   <input type="password" id="passwordInput" placeholder="Mot de passe">
   <button onclick="validatePassword()">Valider</button>
 </div>
 
-<!-- === Curseur de taille === -->
 <div class="size-box" id="sizeBox">
   <label for="sizeRange">Taille :</label>
   <input type="range" id="sizeRange" min="8" max="50" step="1">
   <span id="sizeValue"></span>
 </div>
 
-<!-- === Image d'affichage === -->
 <div class="image-container" id="imageContainer">
   <img id="imageDisplay">
 </div>
 
-<!-- === Zone zoomable === -->
 <div id="zoomContainer"></div>
 
 <script>
-/* === Barre de chargement === */
 const progressText = document.getElementById("progressText");
 let progress = 0;
 const interval = setInterval(() => {
@@ -249,7 +239,6 @@ window.addEventListener("load", () => {
   setTimeout(hideIntro, 3200);
 });
 
-/* === Gestion de la taille === */
 const sizeBox = document.getElementById("sizeBox");
 const sizeRange = document.getElementById("sizeRange");
 const sizeValue = document.getElementById("sizeValue");
@@ -266,7 +255,6 @@ sizeRange.addEventListener("input", () => {
   localStorage.setItem("numberSize", val);
 });
 
-/* === Mot de passe === */
 const correctPassword = "17061977";
 let isPasswordValid = false;
 
@@ -282,7 +270,6 @@ function validatePassword() {
   }
 }
 
-/* === Carte & stockage === */
 const zoomContainer = document.getElementById("zoomContainer");
 const numbers = JSON.parse(localStorage.getItem("numbers")) || {};
 
@@ -318,7 +305,7 @@ function resetNumbers() {
   }
 }
 
-/* === Recherche et Zoom tactile (iPhone) === */
+/* === Recherche + zoom === */
 function searchNumber() {
   const query = document.getElementById("searchInput").value.trim();
   if (!query) return;
@@ -328,9 +315,8 @@ function searchNumber() {
 
   allNumbers.forEach(num => {
     if (num.textContent === query) {
-      num.classList.add("found");
+      num.classList.add("found"); // ✅ reste rouge
       found = num;
-      setTimeout(() => num.classList.remove("found"), 2000);
     } else {
       num.classList.remove("found");
     }
@@ -350,6 +336,7 @@ function searchNumber() {
   }
 }
 
+/* === Zoom tactile iPhone === */
 let currentScale = 1;
 let currentTranslate = { x: 0, y: 0 };
 let isDragging = false;
@@ -358,14 +345,13 @@ let lastTouchCenter = null;
 let lastTap = 0;
 
 function updateTransform() {
-  zoomContainer.style.transform = 
+  zoomContainer.style.transform =
     `translate(${currentTranslate.x}px, ${currentTranslate.y}px) scale(${currentScale})`;
 }
 
 zoomContainer.addEventListener("touchstart", (e) => {
   const now = Date.now();
   if (now - lastTap < 300 && e.touches.length === 1) {
-    // double-tap -> zoom toggle
     if (currentScale === 1) currentScale = 2;
     else currentScale = 1;
     updateTransform();
@@ -410,21 +396,15 @@ zoomContainer.addEventListener("touchmove", (e) => {
   }
 }, { passive: false });
 
-zoomContainer.addEventListener("touchend", () => {
-  isDragging = false;
-});
+zoomContainer.addEventListener("touchend", () => { isDragging = false; });
 
 function getTouchDistance(touches) {
   const [t1, t2] = touches;
   return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
 }
-
 function getTouchCenter(touches) {
   const [t1, t2] = touches;
-  return {
-    x: (t1.clientX + t2.clientX) / 2,
-    y: (t1.clientY + t2.clientY) / 2
-  };
+  return { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
 }
 </script>
 </body>
