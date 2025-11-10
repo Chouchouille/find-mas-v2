@@ -289,12 +289,19 @@ function resetNumbers() {
   }
 }
 
-/* === Recherche persistante === */
+/* === Recherche persistante avec suppression des précédentes === */
 function searchNumber() {
   const query = document.getElementById("searchInput").value.trim();
   if (!query) return;
 
   const allNumbers = document.querySelectorAll(".number");
+
+  // Supprime la mise en évidence précédente
+  allNumbers.forEach(num => num.classList.remove("found"));
+  for (const n in numbers) {
+    numbers[n].found = false;
+  }
+
   let found = null;
   allNumbers.forEach(num => {
     if (num.textContent === query) {
